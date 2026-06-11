@@ -31,6 +31,7 @@ interface InventoryItem {
   category: string;
   stock: number;
   price?: number;
+  location?: string;
 }
 
 interface InventoryScrollLoadingProps {
@@ -127,8 +128,10 @@ export function InventoryScrollLoading({ items }: InventoryScrollLoadingProps) {
 
       {/* ScrollView: Lista con scroll */}
       <ScrollView
+        nestedScrollEnabled={true}
         scrollEnabled={true}
         showsVerticalScrollIndicator={true}
+        contentContainerStyle={styles.scrollContent}
         style={styles.scrollView}
       >
         {items.map((item) => (
@@ -156,6 +159,15 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item }: ItemCardProps) {
+  const priceLabel =
+    typeof item.price === 'number'
+      ? new Intl.NumberFormat('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+          maximumFractionDigits: 0,
+        }).format(item.price)
+      : null;
+
   return (
     <View style={styles.itemCard}>
       {/* Fila superior: Nombre + Stock */}
@@ -169,7 +181,6 @@ function ItemCard({ item }: ItemCardProps) {
         <View
           style={[
             styles.stockBadge,
-            // Cambiar color según el stock
             item.stock > 10
               ? styles.stockHigh
               : item.stock > 0
@@ -181,16 +192,27 @@ function ItemCard({ item }: ItemCardProps) {
         </View>
       </View>
 
+      {/* Bloque extra para que el scroll tenga contenido más rico */}
+      <View style={styles.metaGrid}>
+        <View style={styles.metaItem}>
+          <Text style={styles.metaLabel}>Ubicación</Text>
+          <Text style={styles.metaValue}>{item.location ?? 'Sin ubicación'}</Text>
+        </View>
+
+        <View style={styles.metaItem}>
+          <Text style={styles.metaLabel}>Disponibilidad</Text>
+          <Text style={styles.metaValue}>
+            {item.stock} unidad{item.stock !== 1 ? 'es' : ''}
+          </Text>
+        </View>
+      </View>
+
       {/* Fila inferior: Información adicional */}
       <View style={styles.itemFooter}>
         <Text style={styles.itemInfo}>
-          Disponible: <Text style={{ fontWeight: '700' }}>{item.stock} unidad{item.stock !== 1 ? 'es' : ''}</Text>
+          Stock actual: <Text style={{ fontWeight: '700' }}>{item.stock}</Text>
         </Text>
-        {item.price && (
-          <Text style={styles.itemPrice}>
-            ${item.price.toFixed(2)}
-          </Text>
-        )}
+        {priceLabel && <Text style={styles.itemPrice}>{priceLabel}</Text>}
       </View>
     </View>
   );
@@ -204,7 +226,7 @@ const styles = StyleSheet.create({
    * - Se usa dentro de un ScrollView padre
    */
   container: {
-    maxHeight: 400, // Altura máxima antes de scrollear
+    height: 360,
     backgroundColor: '#08111e',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -232,7 +254,12 @@ const styles = StyleSheet.create({
    * Esto es importante para que el scroll sea correcto
    */
   scrollView: {
-    flex: 1,
+    flexGrow: 0,
+    maxHeight: 290,
+  },
+
+  scrollContent: {
+    paddingBottom: 6,
   },
 
   // ===== ESTADO DE CARGA =====
@@ -332,6 +359,34 @@ const styles = StyleSheet.create({
     color: '#9db9d3',
     fontSize: 12,
     fontWeight: '500',
+  },
+
+  metaGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  metaItem: {
+    flex: 1,
+    backgroundColor: 'rgba(13, 32, 52, 0.9)',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(110, 179, 255, 0.08)',
+  },
+
+  metaLabel: {
+    color: '#9db9d3',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+
+  metaValue: {
+    color: '#f6fbff',
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   /**
